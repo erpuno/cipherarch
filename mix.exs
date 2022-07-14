@@ -21,7 +21,7 @@ defmodule CIPHER.Mixfile do
       licenses: ["ISC"],
       maintainers: ["Namdak Tonpa"],
       name: :cipherarch,
-      links: %{"GitHub" => "https://github.com/synrc/cipherarch"}
+      links: %{"GitHub" => "https://github.com/erpuno/cipherarch"}
     ]
   end
 
