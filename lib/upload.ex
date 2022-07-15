@@ -19,12 +19,18 @@ defmodule CIPHER.UP do
   end
 
   def proc(:init, N2O.pi(state: {login, pass, from, to, doc, _}) = pi) do
-      bearer = auth(login, pass)
-      {id,res} = upload(bearer, doc)
-      case {id,res} do
-           {[],_} -> CIPHER.error 'ERROR: ~p~n', [res] ; cancel(doc)
-           {id,_} -> CIPHER.debug 'ID: ~p~n', [id] ; publish(id,doc) ; cancel(doc)
+      bearer = case :application.get_env(:n2o, :jwt_prod, false) do
+          false -> :application.get_env(:n2o, :bearer, [])
+          true -> CIPHER.auth(login, pass)
       end
+      {id,res} = CIPHER.upload(bearer, doc)
+      case {id,res} do
+           {[],_} -> CIPHER.error 'ERROR: ~p~n', [res]
+           {id,_} -> CIPHER.debug 'ID: ~p~n', [id]
+                     CIPHER.publish(bearer,id,doc)
+                     CIPHER.metainfo(bearer,id,doc)
+      end
+      CIPHER.cancel(doc)
       {:ok, N2O.pi(pi, state: {login, pass, from, to, doc, id})}
   end
 
@@ -34,41 +40,8 @@ defmodule CIPHER.UP do
       {:noreply, pi}
   end
 
-  def proc(any) do
-  end
-
-  def cancel(doc), do: spawn(fn -> :n2o_pi.stop(:cipher, doc) end)
-
-  def publish(id,doc) do
-  end
-
-  def upload(bearer,doc) do
-      {:ok, file} = :file.read_file(doc)
-      file_len = :io_lib.format('~p',[:erlang.size(file)])
-      url = :application.get_env(:n2o, :cipher_upload, [])
-      octet = 'application/octet-stream'
-      headers = [{'Authorization',bearer},{'Content-Type',octet},{'Content-Length', file_len}]
-      {:ok,{status,headers,body}} = :httpc.request(:post, {url, headers, octet, file},
-                                                          [{:timeout,100000}], [{:body_format,:binary}])
-      CIPHER.debug 'STATUS: ~p~n', [status]
-      res = :jsone.decode body
-      id = :maps.get "id", res, []
-      {id,res}
-  end
-
-  def auth(login,pass) do
-      url = :application.get_env(:n2o, :cipher_auth, [])
-      body = :jsone.encode([grant_type: "password", username: login, client_id: "arch-client", password: pass])
-      len = :io_lib.format('~p',[:erlang.size(body)])
-      app_json = 'application/json'
-      headers = [{'Content-Type',app_json},{'Content-Length', len}]
-      {:ok,{status,headers,body}} = :httpc.request(:post, {url, headers, app_json, body},
-                                                          [{:timeout,10000}], [{:body_format,:binary}])
-      CIPHER.debug 'STATUS: ~p~n', [status]
-      res = :jsone.decode body
-      bearer = :maps.get "token_type", res
-      token = :maps.get "access_token", res
-      tok = bearer <> " " <> token |> :erlang.binary_to_list
+  def proc(_,pi) do
+      {:noreply, pi}
   end
 
 end
