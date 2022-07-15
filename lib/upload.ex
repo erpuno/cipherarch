@@ -22,8 +22,10 @@ defmodule CIPHER.UP do
 
   def proc(:init, N2O.pi(state: {login, pass, from, to, doc, mode}) = pi) do
       bearer = auth(login, pass)
-      res = upload(bearer, doc)
-      CIPHER.debug 'STATUS: ~p~n', [res]
+      case upload(bearer, doc) do
+           {[],res} -> CIPHER.error 'ERROR: ~p~n', [res]
+           {id,res} -> CIPHER.debug 'ID: ~p~n', [id]
+      end
       cancel(doc)
       {:ok, N2O.pi(pi, state: {login, pass, from, to, doc, mode})}
   end
@@ -44,7 +46,9 @@ defmodule CIPHER.UP do
       headers = [{'Authorization',bearer},{'Content-Type',octet},{'Content-Length', file_len}]
       {:ok,{status,headers,body}} = :httpc.request(:post, {url, headers, octet, file}, [{:timeout,100000}], [{:body_format,:binary}])
       CIPHER.debug 'STATUS: ~p~n', [status]
-      :jsone.decode body
+      res = :jsone.decode body
+      id = :maps.get "id", res, []
+      {id,res}
   end
 
   def auth(login,pass) do
