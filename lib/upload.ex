@@ -2,8 +2,6 @@ defmodule CIPHER.UP do
   require Record
   require N2O
 
-  def cancel(doc), do: spawn(fn -> :n2o_pi.stop(:cipher, doc) end)
-
   def start(login, pass, from, to, doc, _cnt) do
 
     spawn(fn ->
@@ -12,7 +10,7 @@ defmodule CIPHER.UP do
           module: __MODULE__,
           table: :cipher,
           sup: CIPHER,
-          state: {login, pass, from, to, doc, {0, 0, 0}},
+          state: {login, pass, from, to, doc, []},
           name: doc)) do
         {:error, x} -> CIPHER.error 'CIPHER ERROR: ~p', [x]
         x -> CIPHER.warning 'CIPHER: ~p', [x]
@@ -20,22 +18,28 @@ defmodule CIPHER.UP do
     end)
   end
 
-  def proc(:init, N2O.pi(state: {login, pass, from, to, doc, mode}) = pi) do
+  def proc(:init, N2O.pi(state: {login, pass, from, to, doc, _}) = pi) do
       bearer = auth(login, pass)
-      case upload(bearer, doc) do
-           {[],res} -> CIPHER.error 'ERROR: ~p~n', [res]
-           {id,res} -> CIPHER.debug 'ID: ~p~n', [id]
+      {id,res} = upload(bearer, doc)
+      case {id,res} do
+           {[],_} -> CIPHER.error 'ERROR: ~p~n', [res] ; cancel(doc)
+           {id,_} -> CIPHER.debug 'ID: ~p~n', [id] ; publish(id,doc) ; cancel(doc)
       end
-      cancel(doc)
-      {:ok, N2O.pi(pi, state: {login, pass, from, to, doc, mode})}
+      {:ok, N2O.pi(pi, state: {login, pass, from, to, doc, id})}
   end
 
-  def proc({:upload, messageSize, pos, count, sessionId, rest} = m,
+  def proc({:publish, messageSize, pos, count, sessionId, rest} = m,
         N2O.pi(state: {login, pass, _, _, msg_id, _}) = pi) do
+
       {:noreply, pi}
   end
 
   def proc(any) do
+  end
+
+  def cancel(doc), do: spawn(fn -> :n2o_pi.stop(:cipher, doc) end)
+
+  def publish(id,doc) do
   end
 
   def upload(bearer,doc) do
@@ -44,7 +48,8 @@ defmodule CIPHER.UP do
       url = :application.get_env(:n2o, :cipher_upload, [])
       octet = 'application/octet-stream'
       headers = [{'Authorization',bearer},{'Content-Type',octet},{'Content-Length', file_len}]
-      {:ok,{status,headers,body}} = :httpc.request(:post, {url, headers, octet, file}, [{:timeout,100000}], [{:body_format,:binary}])
+      {:ok,{status,headers,body}} = :httpc.request(:post, {url, headers, octet, file},
+                                                          [{:timeout,100000}], [{:body_format,:binary}])
       CIPHER.debug 'STATUS: ~p~n', [status]
       res = :jsone.decode body
       id = :maps.get "id", res, []
@@ -57,7 +62,9 @@ defmodule CIPHER.UP do
       len = :io_lib.format('~p',[:erlang.size(body)])
       app_json = 'application/json'
       headers = [{'Content-Type',app_json},{'Content-Length', len}]
-      {:ok,{status,headers,body}} = :httpc.request(:post, {url, headers, app_json, body}, [{:timeout,10000}], [{:body_format,:binary}])
+      {:ok,{status,headers,body}} = :httpc.request(:post, {url, headers, app_json, body},
+                                                          [{:timeout,10000}], [{:body_format,:binary}])
+      CIPHER.debug 'STATUS: ~p~n', [status]
       res = :jsone.decode body
       bearer = :maps.get "token_type", res
       token = :maps.get "access_token", res
