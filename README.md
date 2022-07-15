@@ -18,6 +18,8 @@ config: :n2o,
   cipher_auth: 'https://ccs-dev-api.cipher.kiev.ua/ccs/auth-2/token',
   cipher_upload: 'https://archive-api.cipher.com.ua/arch/api/v1/object/',
   bearer: 'Bearer xxxx',
+  login: "Максим Сохацький",
+  pass: "1234",
   jwt_prod: false,
 ```
 
