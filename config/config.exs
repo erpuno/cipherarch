@@ -9,7 +9,7 @@ config :n2o,
        id: :synrc,
        max_size: 2000,
        module: :logger_std_h,
-       config: %{type: :file, file: 'cipher.log'},
+       config: %{type: :file, file: 'cipherarch.log'},
        formatter:
          {:logger_formatter,
           %{ template: [:time, ' ', :pid, ' ', :module, ' ', :msg, '\n'],
