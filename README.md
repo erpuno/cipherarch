@@ -1,10 +1,12 @@
 CIPHER: Цифровий Шифроархів
 ===========================
 
+[![Hex pm](http://img.shields.io/hexpm/v/cipherarch.svg?style=flat&x=1)](https://hex.pm/packages/cipherarch)
+
 Інформація
 ----------
 
-Тут представлений конектор на мові Elixir для <a href="https://cipher.com.ua/en/products/cipher-arch">Шифроархіву компанії CIPHER</a>
+Тут представлений конектор на мові Elixir для <a href="https://cipher.com.ua/en/products/cipher-arch">Шифроархіву компанії CIPHER</a>.
 
 Конфігурація
 ------------
