@@ -35,12 +35,6 @@ defmodule CIPHER.UP do
       {:ok, N2O.pi(pi, state: {login, pass, from, to, doc, id})}
   end
 
-  def proc({:publish, messageSize, pos, count, sessionId, rest} = m,
-        N2O.pi(state: {login, pass, _, _, msg_id, _}) = pi) do
-
-      {:noreply, pi}
-  end
-
   def proc(_,pi) do
       {:noreply, pi}
   end

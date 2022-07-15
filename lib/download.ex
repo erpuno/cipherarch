@@ -8,36 +8,44 @@ defmodule CIPHER.DOWN do
          state: {"local", login, pass, msg, true, []}, name: msg)) end)
   end
 
-  def proc(:init, N2O.pi(state: {org, login, pass, msg_id, delete, pid}) = pi) do
+  def proc(:init, N2O.pi(state: {_, login, pass, msg_id, _, _}) = pi) do
       bearer = case :application.get_env(:n2o, :jwt_prod, false) do
           false -> :application.get_env(:n2o, :bearer, [])
           true -> CIPHER.auth(login, pass)
       end
-      {status,id,body} = CIPHER.download(bearer, msg_id)
-      :filelib.ensure_dir("priv/download/")
-      case status do
-           {_,200,_} -> :file.write_file("priv/download/" <> :erlang.list_to_binary(id), body, [:binary,:raw])
-                   _ -> :skip
-      end
-      {status2,id2,body2} = CIPHER.downloadSignature(bearer, msg_id)
-      case {status2,body2} do
-            {{_,200,_},[]} -> CIPHER.warning 'DOWNLOAD SIGNATURE: empty for ~ts', [id2]
-             {{_,200,_},signatures} ->
-                        :lists.map(fn res ->
-                           sid = :maps.get "id", res
-                           sign = :maps.get("signature", res) |> :base64.decode
-                           CIPHER.debug 'DOWNLOAD SIGNATURE: ~ts', [sid]
-                           :file.write_file("priv/download/" <> :erlang.list_to_binary(id)
-                                <> "-" <> sid <> ".p7s", sign, [:binary,:raw])
-                          end, signatures)
-                   _ -> :skip
-      end
+      CIPHER.download(bearer, msg_id) |> savePayload
+      CIPHER.downloadSignature(bearer, msg_id) |> saveSignatures
       CIPHER.cancel(msg_id)
-      {:ok, N2O.pi(pi, state: {org, login, pass, msg_id, delete, id})}
+      {:ok, pi}
   end
 
   def proc(_,pi) do
       {:noreply, pi}
+  end
+
+  def savePayload({status, id, body}) do
+      :filelib.ensure_dir("priv/download/")
+      case status do
+           {_,200,_} ->
+                file = "priv/download/" <> :erlang.list_to_binary(id)
+                :file.write_file(file, body, [:binary,:raw])
+           _ -> :skip
+      end
+  end
+
+  def saveSignatures({status, id, body}) do
+      case {status,body} do
+           {{_,200,_},[]} -> CIPHER.warning 'DOWNLOAD SIGNATURE: empty for ~ts', [id]
+           {{_,200,_},signatures} ->
+                :lists.map(fn res ->
+                   sid = :maps.get "id", res
+                   sign = :maps.get("signature", res) |> :base64.decode
+                   CIPHER.debug 'DOWNLOAD SIGNATURE: ~ts', [sid]
+                   file = "priv/download/" <> :erlang.list_to_binary(id) <> "-" <> sid <> ".p7s"
+                   :file.write_file(file, sign, [:binary,:raw])
+                end, signatures)
+           _ -> :skip
+      end
   end
 
 end
