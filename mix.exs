@@ -12,12 +12,12 @@ defmodule CIPHER.Mixfile do
   end
 
   def application do
-    [mod: {CIPHER, []}, applications: [:logger, :n2o]]
+    [mod: {CIPHER, []}, applications: [:logger, :n2o, :jsone, :inets]]
   end
 
   def package do
     [
-      files: ~w(libmix.exs),
+      files: ~w(lib mix.exs),
       licenses: ["ISC"],
       maintainers: ["Namdak Tonpa"],
       name: :cipherarch,

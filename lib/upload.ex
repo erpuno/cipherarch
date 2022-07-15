@@ -27,15 +27,17 @@ defmodule CIPHER.UP do
     body = :jsone.encode([grant_type: "password", username: login, client_id: "arch-client", password: pass])
     len = :io_lib.format('~p',[:erlang.size(body)])
     file_len = :io_lib.format('~p',[:erlang.size(file)])
-    headers = [{'Content-Type','application/json'},{'Content-Length', len}]
-    {:ok,{status,headers,body}} = :httpc.request(:post, {url, headers, 'application/json', body}, [{:timeout,10000}], [{:body_format,:binary}])
+    app_json = 'application/json'
+    headers = [{'Content-Type',app_json},{'Content-Length', len}]
+    {:ok,{status,headers,body}} = :httpc.request(:post, {url, headers, app_json, body}, [{:timeout,10000}], [{:body_format,:binary}])
     res = :jsone.decode body
     bearer = :maps.get "token_type", res
     token = :maps.get "access_token", res
     tok = bearer <> " " <> token |> :erlang.binary_to_list
     url = 'https://archive-api.cipher.com.ua/arch/api/v1/object/1'
-    headers = [{'Authorization',tok},{'Content-Type','application/octet-stream'},{'Content-Length', file_len}]
-    {:ok,{status,headers,body}} = :httpc.request(:post, {url, headers, 'application/octet-stream', file}, [{:timeout,100000}], [{:body_format,:binary}])
+    octet = 'application/octet-stream'
+    headers = [{'Authorization',tok},{'Content-Type',octet},{'Content-Length', file_len}]
+    {:ok,{status,headers,body}} = :httpc.request(:post, {url, headers, octet, file}, [{:timeout,100000}], [{:body_format,:binary}])
     CIPHER.debug 'STATUS: ~p~n', [status]
     cancel(doc)
     {:ok, N2O.pi(pi, state: {login, token, from, to, doc, mode})}
