@@ -36,7 +36,7 @@ $ sudo apt install erlang elixir
 ```
 $ mix deps.get
 $ iex -S mix
-> CIPHER.send 1, "mix.exs"
+> CIPHER.send 1, "N2O.docx"
 ```
 
 Автор

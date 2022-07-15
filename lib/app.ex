@@ -96,6 +96,28 @@ defmodule CIPHER do
       {id,res}
   end
 
+  def uploadSignature(bearer,id,doc) do
+      case :file.read_file(doc <> ".p7s") do
+      {:error, reason} -> CIPHER.warning 'P7S not available for ~p ~p.', [id,doc]
+      {:ok, file} ->
+         file_len = :io_lib.format('~p',[:erlang.size(file)])
+         url = :application.get_env(:n2o, :cipher_upload, []) ++ id ++ '/signature'
+         octet = 'application/octet-stream'
+         headers = [{'Authorization',bearer},{'Content-Type',octet}]
+         {:ok,{status,headers,body}} = :httpc.request(:put, {url, headers, octet, file},
+                                                          [{:timeout,100000}], [{:body_format,:binary}])
+         case status do
+            {_,200,_} -> CIPHER.debug 'UPLOAD SIGNATURE: ~ts ~p~n', [id,status]
+              _ -> res = :jsone.decode body
+                   msg = :maps.get "message", res
+                   code = :maps.get "code", res
+                   CIPHER.error 'UPLOAD SIGNATURE: id: ~ts, code: ~ts, message: ~ts~n', [id,code,msg]
+         end
+         CIPHER.debug 'UPLOAD SIGNATURE: ~p~n', [status]
+         {id,body}
+      end
+  end
+
   def download(bearer,id) do
       url = :application.get_env(:n2o, :cipher_upload, []) ++ id ++ '/data'
       headers = [{'Authorization',bearer}]

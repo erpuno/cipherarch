@@ -4,7 +4,7 @@ defmodule CIPHER.Mixfile do
   def project do
     [
       app: :cipherarch,
-      version: "0.7.14",
+      version: "0.7.15",
       description: "CIPHER X.509 Signed Document Archive",
       package: package(),
       deps: deps()
