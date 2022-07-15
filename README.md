@@ -24,7 +24,7 @@ config: :n2o,
 
 ```
 $ sudo apt install erlang elixir
-``
+```
 
 Білд
 ----
