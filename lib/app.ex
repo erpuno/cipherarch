@@ -98,7 +98,7 @@ defmodule CIPHER do
 
   def uploadSignature(bearer,id,doc) do
       case :file.read_file(doc <> ".p7s") do
-      {:error, reason} -> CIPHER.warning 'P7S not available for ~p ~p.', [id,doc]
+      {:error, reason} -> CIPHER.warning 'P7S is not available for ~p ~p.', [id,doc]
       {:ok, file} ->
          file_len = :io_lib.format('~p',[:erlang.size(file)])
          url = :application.get_env(:n2o, :cipher_upload, []) ++ id ++ '/signature'
