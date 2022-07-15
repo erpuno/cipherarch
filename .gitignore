@@ -1,0 +1,10 @@
+ebin
+*.dets
+*.gz
+*.dump
+.applist
+config/*
+rocksdb/
+deps/
+_build/
+*.lock
