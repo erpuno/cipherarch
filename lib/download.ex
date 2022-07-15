@@ -16,12 +16,21 @@ defmodule CIPHER.DOWN do
       {status,id,body} = CIPHER.download(bearer, msg_id)
       :filelib.ensure_dir("priv/download/")
       case status do
-           {_,200,_} -> CIPHER.debug 'DOWNLOAD: ~ts~n', [id]
-                        :file.write_file("priv/download/" <> :erlang.list_to_binary(id), body, [:binary,:raw])
-                   _ -> res = :jsone.decode body
-                        msg = :maps.get "message", res
-                        code = :maps.get "code", res
-                        CIPHER.error 'DOWNLOAD: id: ~p, code: ~ts, message: ~ts~n', [id,code,msg]
+           {_,200,_} -> :file.write_file("priv/download/" <> :erlang.list_to_binary(id), body, [:binary,:raw])
+                   _ -> :skip
+      end
+      {status2,id2,body2} = CIPHER.downloadSignature(bearer, msg_id)
+      case {status2,body2} do
+            {{_,200,_},[]} -> CIPHER.warning 'DOWNLOAD SIGNATURE: empty for ~ts', [id2]
+             {{_,200,_},signatures} ->
+                        :lists.map(fn res ->
+                           sid = :maps.get "id", res
+                           sign = :maps.get("signature", res) |> :base64.decode
+                           CIPHER.debug 'DOWNLOAD SIGNATURE: ~ts', [sid]
+                           :file.write_file("priv/download/" <> :erlang.list_to_binary(id)
+                                <> "-" <> sid <> ".p7s", sign, [:binary,:raw])
+                          end, signatures)
+                   _ -> :skip
       end
       CIPHER.cancel(msg_id)
       {:ok, N2O.pi(pi, state: {org, login, pass, msg_id, delete, id})}

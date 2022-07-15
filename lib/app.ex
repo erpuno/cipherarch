@@ -54,7 +54,7 @@ defmodule CIPHER do
       headers = [{'Authorization',bearer}]
       {:ok,{status,headers,body}} = :httpc.request(:put, {url, headers},
                                     [{:timeout,100000}], [{:body_format,:binary}])
-      CIPHER.debug 'PUBLISH: ~ts ~p~n', [id,status]
+      CIPHER.debug 'PUBLISH: ~ts ~p', [id,status]
       body
   end
 
@@ -73,27 +73,30 @@ defmodule CIPHER do
       {:ok,{status,headers,body}} = :httpc.request(:put, {url, headers, app_json, body},
                                     [{:timeout,100000}], [{:body_format,:binary}])
       case status do
-         {_,200,_} -> CIPHER.debug 'METAINFO: ~ts ~p~n', [id,status]
+         {_,200,_} -> CIPHER.debug 'METAINFO: ~ts ~p', [id,status]
            _ -> res = :jsone.decode body
                 msg = :maps.get "message", res
                 code = :maps.get "code", res
-                CIPHER.error 'METAINFO: id: ~ts, code: ~ts, message: ~ts~n', [id,code,msg]
+                CIPHER.error 'METAINFO: id: ~ts, code: ~ts, message: ~ts', [id,code,msg]
       end
       body
   end
 
   def upload(bearer,doc) do
-      {:ok, file} = :file.read_file(doc)
+      case :file.read_file(doc) do
+         {:error, reason} -> {[],reason}
+         {:ok, file} ->
       file_len = :io_lib.format('~p',[:erlang.size(file)])
       url = :application.get_env(:n2o, :cipher_upload, []) ++ '1'
       octet = 'application/octet-stream'
       headers = [{'Authorization',bearer},{'Content-Type',octet},{'Content-Length', file_len}]
       {:ok,{status,headers,body}} = :httpc.request(:post, {url, headers, octet, file},
-                                                          [{:timeout,100000}], [{:body_format,:binary}])
-      CIPHER.debug 'UPLOAD: ~p~n', [status]
+                                      [{:timeout,100000}], [{:body_format,:binary}])
+      CIPHER.debug 'UPLOAD: ~p', [status]
       res = :jsone.decode body
       id = :maps.get("id", res, []) |> :erlang.binary_to_list
       {id,res}
+      end
   end
 
   def uploadSignature(bearer,id,doc) do
@@ -105,15 +108,15 @@ defmodule CIPHER do
          octet = 'application/octet-stream'
          headers = [{'Authorization',bearer},{'Content-Type',octet}]
          {:ok,{status,headers,body}} = :httpc.request(:put, {url, headers, octet, file},
-                                                          [{:timeout,100000}], [{:body_format,:binary}])
+                                      [{:timeout,100000}], [{:body_format,:binary}])
          case status do
-            {_,200,_} -> CIPHER.debug 'UPLOAD SIGNATURE: ~ts ~p~n', [id,status]
+            {_,200,_} -> CIPHER.debug 'UPLOAD SIGNATURE: ~ts ~p', [id,status]
               _ -> res = :jsone.decode body
                    msg = :maps.get "message", res
                    code = :maps.get "code", res
-                   CIPHER.error 'UPLOAD SIGNATURE: id: ~ts, code: ~ts, message: ~ts~n', [id,code,msg]
+                   CIPHER.error 'UPLOAD SIGNATURE: id: ~ts, code: ~ts, message: ~ts', [id,code,msg]
          end
-         CIPHER.debug 'UPLOAD SIGNATURE: ~p~n', [status]
+         CIPHER.debug 'UPLOAD SIGNATURE: ~p', [status]
          {id,body}
       end
   end
@@ -122,9 +125,24 @@ defmodule CIPHER do
       url = :application.get_env(:n2o, :cipher_upload, []) ++ id ++ '/data'
       headers = [{'Authorization',bearer}]
       {:ok,{status,headers,body}} = :httpc.request(:get, {url, headers},
-                                                          [{:timeout,100000}], [{:body_format,:binary}])
-      CIPHER.debug 'DOWNLOAD ~ts: ~p~n', [id,status]
+                                     [{:timeout,100000}], [{:body_format,:binary}])
+      CIPHER.debug 'DOWNLOAD ~ts: ~p', [id,status]
       {status,id,body}
+  end
+
+  def downloadSignature(bearer,id) do
+      url = :application.get_env(:n2o, :cipher_upload, []) ++ id ++ '/signature'
+      headers = [{'Authorization',bearer}]
+      {:ok,{status,headers,body}} = :httpc.request(:get, {url, headers},
+                                      [{:timeout,100000}], [{:body_format,:binary}])
+      case status do
+        {_,200,_} -> CIPHER.debug 'DOWNLOAD SIGNATURE: ~ts ~p', [id,status]
+          _ -> res = :jsone.decode body
+               msg = :maps.get "message", res
+               code = :maps.get "code", res
+               CIPHER.error 'DOWNLOAD SIGNATURE: id: ~ts, code: ~ts, message: ~ts', [id,code,msg]
+      end
+      {status,id,:jsone.decode(body)}
   end
 
   def auth(login,pass) do
@@ -134,10 +152,10 @@ defmodule CIPHER do
       app_json = 'application/json'
       headers = [{'Content-Type',app_json},{'Content-Length', len}]
       {:ok,{status,headers,body}} = :httpc.request(:post, {url, headers, app_json, body},
-                                                          [{:timeout,10000}], [{:body_format,:binary}])
+                                    [{:timeout,10000}], [{:body_format,:binary}])
       res = :jsone.decode body
       bearer = :maps.get "token_type", res
-      CIPHER.debug 'AUTH: ~p~n', [bearer]
+      CIPHER.debug 'AUTH: ~p', [bearer]
       token = :maps.get "access_token", res
       tok = bearer <> " " <> token |> :erlang.binary_to_list
   end

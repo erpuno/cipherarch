@@ -25,8 +25,8 @@ defmodule CIPHER.UP do
       end
       {id,res} = CIPHER.upload(bearer, doc)
       case {id,res} do
-           {[],_} -> CIPHER.error 'ERROR: ~p~n', [res]
-           {id,_} -> CIPHER.debug 'ID: ~p~n', [id]
+           {[],_} -> CIPHER.error 'UPLOAD ERROR: ~p', [res]
+           {id,_} -> CIPHER.debug 'UPLOAD ID: ~p', [id]
                      CIPHER.uploadSignature(bearer,id,doc)
                      CIPHER.publish(bearer,id,doc)
                      CIPHER.metainfo(bearer,id,doc)
