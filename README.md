@@ -19,6 +19,13 @@ config: :n2o,
   jwt_prod: false,
 ```
 
+Пререквізити
+------------
+
+```
+$ sudo apt install erlang elixir
+``
+
 Білд
 ----
 
