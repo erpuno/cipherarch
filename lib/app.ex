@@ -47,7 +47,7 @@ defmodule CIPHER do
 
   # REST/JSON API
 
-  def cancel(doc), do: spawn(fn -> :n2o_pi.stop(:cipher, doc) end)
+  def cancel(doc), do: spawn(fn -> :timer.sleep(2000) ; :n2o_pi.stop(:cipher, doc) end)
 
   def publish(bearer,id,_) do
       url = :application.get_env(:n2o, :cipher_upload, []) ++ id

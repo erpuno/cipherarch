@@ -39,6 +39,26 @@ $ sudo apt install erlang elixir
 $ mix deps.get
 $ iex -S mix
 > CIPHER.send 1, "N2O.docx"
+03:09:43.394 [debug] CIPHER UPLOAD: {"HTTP/1.1",200,[]}
+03:09:43.394 [debug] CIPHER UPLOAD ID: "c9983ae3f517fbc9a147d5c34f22932f42fe965b"
+03:09:45.641 [debug] CIPHER UPLOAD SIGNATURE: c9983ae3f517fbc9a147d5c34f22932f42fe965b {"HTTP/1.1",200,[]}
+03:09:45.641 [debug] CIPHER UPLOAD SIGNATURE: {"HTTP/1.1",200,[]}
+03:09:47.636 [debug] CIPHER PUBLISH: c9983ae3f517fbc9a147d5c34f22932f42fe965b {"HTTP/1.1",200,[]}
+03:09:48.633 [debug] CIPHER METAINFO: c9983ae3f517fbc9a147d5c34f22932f42fe965b {"HTTP/1.1",200,[]}
+03:09:48.634 [warn]  CIPHER CIPHER: {<0.276.0>,<<"N2O.docx">>}
+> CIPHER.down 'c9983ae3f517fbc9a147d5c34f22932f42fe965b'
+03:15:43.413 [debug] CIPHER DOWNLOAD c9983ae3f517fbc9a147d5c34f22932f42fe965b: {"HTTP/1.1",200,[]}
+03:15:43.477 [debug] CIPHER DOWNLOAD SIGNATURE: c9983ae3f517fbc9a147d5c34f22932f42fe965b {"HTTP/1.1",200,[]}
+03:15:43.479 [debug] CIPHER DOWNLOAD SIGNATURE: signature-9e208b8
+```
+
+```
+> :supervisor.which_children CIPHER
+[
+  {{:cipher, 'c9983ae3f517fbc9a147d5c34f22932f42fe965b'}, #PID<0.465.0>, :worker, [CIPHER.DOWN]},
+  {{:cipher, "N2O.docx"}, #PID<0.276.0>, :worker, [CIPHER.UP]},
+  {{:cipher, "cipherLink"}, #PID<0.219.0>, :worker, [CIPHER]}
+]
 ```
 
 Автор
