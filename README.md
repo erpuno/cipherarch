@@ -6,7 +6,8 @@ CIPHER: Цифровий Шифроархів
 Інформація
 ----------
 
-Тут представлений конектор на мові Elixir для <a href="https://cipher.com.ua/en/products/cipher-arch">Шифроархіву компанії CIPHER</a>.
+Тут представлений конектор (250 рядків) на мові Elixir
+для <a href="https://cipher.com.ua/en/products/cipher-arch">Шифроархіву компанії CIPHER</a>.
 
 Конфігурація
 ------------

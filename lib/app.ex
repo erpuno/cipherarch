@@ -3,16 +3,13 @@ defmodule CIPHER do
   require N2O
   use Application
 
-  # CIPHER.send 1, "mix.exs"
-  # CIPHER.down "123412341234"
-
   def start(_, _) do
       :logger.add_handlers(:n2o)
       app = Supervisor.start_link([], strategy: :one_for_one, name: CIPHER)
+      pass = :application.get_env(:n2o, :pass,  "")
       login = :application.get_env(:n2o, :login, "")
-      pass = :application.get_env(:n2o, :pass, "")
       :n2o_pi.start(N2O.pi(module: CIPHER, table: :cipher, sup: CIPHER,
-             state: {"cipherLink", login, pass, 0}, name: "cipherLink"))
+              state: {"cipherLink", login, pass, 0}, name: "cipherLink"))
       app
   end
 
@@ -60,10 +57,10 @@ defmodule CIPHER do
 
   def metainfo(bearer,id,doc) do
       author = [firstName: "Максим",
-                              surname: "Сохацький",
-                              position: "Провідний інженер",
-                              department: "Розробки інформаційних систем",
-                              organization: "ІНФОТЕХ"]
+                surname: "Сохацький",
+                position: "Провідний інженер",
+                department: "Розробки інформаційних систем",
+                organization: "ІНФОТЕХ"]
 
       body = :jsone.encode([fileName: doc, description: "Бінарний файл", ownNumber: "123/20",
                             comment: "Коментар від архіваріуса", authors: [author], outerId: "123/20"])
@@ -115,7 +112,6 @@ defmodule CIPHER do
                    code = :maps.get "code", res
                    CIPHER.error 'UPLOAD SIGNATURE: id: ~ts, code: ~ts, message: ~ts', [id,code,msg]
          end
-         CIPHER.debug 'UPLOAD SIGNATURE: ~p', [status]
          {id,body}
       end
   end
