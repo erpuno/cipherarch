@@ -10,7 +10,7 @@ defmodule CIPHER.DOWN do
 
   def proc(:init, N2O.pi(state: {_, login, pass, msg_id, _, _}) = pi) do
       bearer = case :application.get_env(:n2o, :jwt_prod, false) do
-          false -> :application.get_env(:n2o, :bearer, [])
+          false -> :application.get_env(:n2o, :cipher_bearer, [])
           true -> CIPHER.auth(login, pass)
       end
       CIPHER.download(bearer, msg_id) |> savePayload

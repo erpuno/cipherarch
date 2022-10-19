@@ -20,7 +20,7 @@ defmodule CIPHER.UP do
 
   def proc(:init, N2O.pi(state: {login, pass, from, to, doc, _}) = pi) do
       bearer = case :application.get_env(:n2o, :jwt_prod, false) do
-          false -> :application.get_env(:n2o, :bearer, [])
+          false -> :application.get_env(:n2o, :cipher_bearer, [])
           true -> CIPHER.auth(login, pass)
       end
       {id,res} = CIPHER.upload(bearer, doc)

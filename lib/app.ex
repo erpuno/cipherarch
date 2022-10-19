@@ -6,8 +6,8 @@ defmodule CIPHER do
   def start(_, _) do
       :logger.add_handlers(:n2o)
       app = Supervisor.start_link([], strategy: :one_for_one, name: CIPHER)
-      pass = :application.get_env(:n2o, :pass,  "")
-      login = :application.get_env(:n2o, :login, "")
+      pass = :application.get_env(:n2o, :cipher_pass,  "")
+      login = :application.get_env(:n2o, :cipher_login, "")
       :n2o_pi.start(N2O.pi(module: CIPHER, table: :cipher, sup: CIPHER,
               state: {"cipherLink", login, pass, 0}, name: "cipherLink"))
       app
