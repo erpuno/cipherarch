@@ -89,10 +89,13 @@ defmodule CIPHER do
       headers = [{'Authorization',bearer},{'Content-Type',octet},{'Content-Length', file_len}]
       {:ok,{status,_headers,body}} = :httpc.request(:post, {url, headers, octet, file},
                                       [{:timeout,100000}], [{:body_format,:binary}])
-      CIPHER.debug 'UPLOAD: ~p', [status]
-      res = :jsone.decode body
-      id = :maps.get("id", res, []) |> :erlang.binary_to_list
-      {id,res}
+      CIPHER.debug 'UPLOAD: ~p ~tp ~tp', [status, body, file_len]
+      case :jsone.try_decode body do
+        {:ok, res} ->
+          id = :maps.get("id", res, []) |> :erlang.binary_to_list
+          {id,res}
+        _ -> {[], []}
+      end
       end
   end
 

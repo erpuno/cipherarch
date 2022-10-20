@@ -41,7 +41,7 @@ defmodule CIPHER.DOWN do
                    sid = :maps.get "id", res
                    sign = :maps.get("signature", res) |> :base64.decode
                    CIPHER.debug 'DOWNLOAD SIGNATURE: ~ts', [sid]
-                   file = "priv/download/" <> :erlang.list_to_binary(id) <> "-" <> sid <> ".p7s"
+                   file = "priv/download/" <> :erlang.list_to_binary(id) <> ".p7s"
                    :file.write_file(file, sign, [:binary,:raw])
                 end, signatures)
            _ -> :skip
