@@ -13,8 +13,8 @@ defmodule CIPHER do
       app
   end
 
-  def send(to, doc)  do
-      :gen_server.cast :n2o_pi.pid(:cipher, "cipherLink"), {:send, "cipherLink", to, doc}
+  def send(to, doc, sign \\ true)  do
+      :gen_server.call :n2o_pi.pid(:cipher, "cipherLink"), {:send, "cipherLink", to, doc, sign}, 5000
   end
 
   def down(id)  do
@@ -25,9 +25,9 @@ defmodule CIPHER do
       {:ok, pi}
   end
 
-  def proc({:send, from, to, doc}, N2O.pi(state: {_, login, pass, cnt}) = pi) do
-      CIPHER.UP.start(login, pass, from, to, doc, cnt)
-      {:noreply, pi}
+  def proc({:send, from, to, doc, sign}, N2O.pi(state: {_, login, pass, _}) = pi) do
+      res = CIPHER.UP.start(login, pass, from, to, doc, sign)
+      {:reply, res, pi}
   end
 
   def proc({:download, msg_id}, N2O.pi(state: {_, login, pass, _}) = pi) do
@@ -89,9 +89,9 @@ defmodule CIPHER do
       headers = [{'Authorization',bearer},{'Content-Type',octet},{'Content-Length', file_len}]
       {:ok,{status,_headers,body}} = :httpc.request(:post, {url, headers, octet, file},
                                       [{:timeout,100000}], [{:body_format,:binary}])
-      CIPHER.debug 'UPLOAD: ~p ~tp ~tp', [status, body, file_len]
+      CIPHER.debug 'UPLOAD: ~p ~tp', [status, file_len]
       case :jsone.try_decode body do
-        {:ok, res} ->
+        {:ok, res, _} ->
           id = :maps.get("id", res, []) |> :erlang.binary_to_list
           {id,res}
         _ -> {[], []}
