@@ -18,7 +18,7 @@ defmodule CIPHER do
   end
 
   def down(id)  do
-      :gen_server.cast :n2o_pi.pid(:cipher, "cipherLink"), {:download, id}
+      :gen_server.call :n2o_pi.pid(:cipher, "cipherLink"), {:download, id}, 5000
   end
 
   def proc(:init, pi) do
@@ -31,8 +31,8 @@ defmodule CIPHER do
   end
 
   def proc({:download, msg_id}, N2O.pi(state: {_, login, pass, _}) = pi) do
-      CIPHER.DOWN.start(login, pass, msg_id)
-      {:noreply, pi}
+      res = CIPHER.DOWN.start(login, pass, msg_id)
+      {:reply, res, pi}
   end
 
   # helpers

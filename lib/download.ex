@@ -3,20 +3,26 @@ defmodule CIPHER.DOWN do
   require N2O
 
   def start(login, pass, msg) do
-    spawn(fn ->
-      :n2o_pi.start(N2O.pi(module: __MODULE__, table: :cipher, sup: CIPHER,
-         state: {"local", login, pass, msg, true, []}, name: msg)) end)
+    pi = N2O.pi(module: __MODULE__, table: :cipher, sup: CIPHER, state: {"local", login, pass, true, []}, name: msg)
+    case :n2o_pi.start(pi) do
+      {:error, x} -> CIPHER.error 'CIPHER ERROR: ~p', [x]
+      x -> CIPHER.warning 'CIPHER: ~p', [x]
+    end
+    :n2o_pi.send(:n2o_pi.pid(:cipher, msg), {:download, msg})
   end
 
-  def proc(:init, N2O.pi(state: {_, login, pass, msg_id, _, _}) = pi) do
-      bearer = case :application.get_env(:n2o, :jwt_prod, false) do
-          false -> :application.get_env(:n2o, :cipher_bearer, [])
-          true -> CIPHER.auth(login, pass)
+  def proc(:init, pi), do: {:ok, pi}
+
+  def proc({:download, msg_id}, N2O.pi(state: {_, login, pass, _, _}) = pi) do
+    bearer =
+      case :application.get_env(:n2o, :jwt_prod, false) do
+        false -> :application.get_env(:n2o, :cipher_bearer, [])
+        true -> CIPHER.auth(login, pass)
       end
-      CIPHER.download(bearer, msg_id) |> savePayload
-      CIPHER.downloadSignature(bearer, msg_id) |> saveSignatures
-      CIPHER.cancel(msg_id)
-      {:ok, pi}
+    CIPHER.download(bearer, msg_id) |> savePayload
+    CIPHER.downloadSignature(bearer, msg_id) |> saveSignatures
+    CIPHER.cancel(msg_id)
+    {:stop, :normal, :ok, pi}
   end
 
   def proc(_,pi) do
