@@ -122,25 +122,27 @@ defmodule CIPHER do
   def download(bearer,id) do
       url = :application.get_env(:n2o, :cipher_upload, []) ++ id ++ '/data'
       headers = [{'Authorization',bearer}]
-      {:ok,{status,_headers,body}} = :httpc.request(:get, {url, headers},
-                                     [{:timeout,100000}], [{:body_format,:binary}])
-      CIPHER.debug 'DOWNLOAD ~ts: ~p', [id,status]
-      {status,id,body}
+      case :httpc.request(:get, {url, headers}, [{:timeout,100000}], [{:body_format,:binary}]) do
+        {:ok,{status,_,body}} -> CIPHER.debug 'DOWNLOAD ~ts: ~p', [id,status]; {status,id,body}
+        {:error,x} -> {:error,id,x}
+      end
   end
 
   def downloadSignature(bearer,id) do
       url = :application.get_env(:n2o, :cipher_upload, []) ++ id ++ '/signature'
       headers = [{'Authorization',bearer}]
-      {:ok,{status,_headers,body}} = :httpc.request(:get, {url, headers},
-                                      [{:timeout,100000}], [{:body_format,:binary}])
-      case status do
-        {_,200,_} -> CIPHER.debug 'DOWNLOAD SIGNATURE: ~ts ~p', [id,status]
-          _ -> res = :jsone.decode body
-               msg = :maps.get "message", res
-               code = :maps.get "code", res
-               CIPHER.error 'DOWNLOAD SIGNATURE: id: ~ts, code: ~ts, message: ~ts', [id,code,msg]
+      res = :httpc.request(:get, {url, headers},
+                           [{:timeout,100000}], [{:body_format,:binary}])
+      case res do
+        {:ok,{{_,200,_}=s,_,body}} -> CIPHER.debug 'DOWNLOAD SIGNATURE: ~ts ~p', [id,s]; {s,id,:jsone.decode(body)}
+        {:ok,{s,_,body}} ->
+          res = :jsone.decode body
+          msg = :maps.get "message", res
+          code = :maps.get "code", res
+          CIPHER.error 'DOWNLOAD SIGNATURE: id: ~ts, code: ~ts, message: ~ts', [id,code,msg]
+          {s,id,res}
+        {:error,x} -> {:error,id,x}
       end
-      {status,id,:jsone.decode(body)}
   end
 
   def auth(login,pass) do
