@@ -3,7 +3,9 @@ defmodule CIPHER.DOWN do
   require N2O
 
   def start(login, pass, msg) do
-    pi = N2O.pi(module: __MODULE__, table: :cipher, sup: CIPHER, state: {"local", login, pass, true, []}, name: msg)
+    pi = N2O.pi(module: __MODULE__, timeout: :brutal_kill, restart: :temporary, table: :cipher, sup: CIPHER, state: {"local", login, pass, true, []}, name: msg)
+    pid = :n2o_pi.pid(:cipher, msg)
+    is_pid(pid) and :erlang.exit(pid, :kill)
     case :n2o_pi.start(pi) do
       {:error, x} -> CIPHER.error 'CIPHER ERROR: ~p', [x]
       x -> CIPHER.warning 'CIPHER: ~p', [x]

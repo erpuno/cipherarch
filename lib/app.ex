@@ -14,11 +14,11 @@ defmodule CIPHER do
   end
 
   def send(to, doc, sign \\ true)  do
-      :gen_server.call :n2o_pi.pid(:cipher, "cipherLink"), {:send, "cipherLink", to, doc, sign}, 5000
+      :gen_server.call :n2o_pi.pid(:cipher, "cipherLink"), {:send, "cipherLink", to, doc, sign}, 10000
   end
 
   def down(id)  do
-      :gen_server.call :n2o_pi.pid(:cipher, "cipherLink"), {:download, id}, 5000
+      :gen_server.call :n2o_pi.pid(:cipher, "cipherLink"), {:download, id}, 10000
   end
 
   def proc(:init, pi) do
