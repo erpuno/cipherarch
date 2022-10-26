@@ -10,6 +10,7 @@ defmodule CIPHER.UP do
       {:error, x} -> CIPHER.error 'CIPHER ERROR: ~p', [x]
       x -> CIPHER.warning 'CIPHER: ~p', [x]
     end
+    IO.inspect(:n2o_pi.pid(:cipher, doc), label: "LMAO")
     :n2o_pi.send(:n2o_pi.pid(:cipher, doc), {:send, to, doc, sign})
   end
 

@@ -2,7 +2,7 @@ defmodule CIPHER.DOWN do
   require Record
   require N2O
 
-  def start(login, pass, msg) do
+  def start(login, pass, msg, sign) do
     pi = N2O.pi(module: __MODULE__, timeout: :brutal_kill, restart: :temporary, table: :cipher, sup: CIPHER, state: {"local", login, pass, true, []}, name: msg)
     pid = :n2o_pi.pid(:cipher, msg)
     is_pid(pid) and :erlang.exit(pid, :kill)
@@ -10,19 +10,19 @@ defmodule CIPHER.DOWN do
       {:error, x} -> CIPHER.error 'CIPHER ERROR: ~p', [x]
       x -> CIPHER.warning 'CIPHER: ~p', [x]
     end
-    :n2o_pi.send(:n2o_pi.pid(:cipher, msg), {:download, msg})
+    :n2o_pi.send(:n2o_pi.pid(:cipher, msg), {:download, msg, sign})
   end
 
   def proc(:init, pi), do: {:ok, pi}
 
-  def proc({:download, msg_id}, N2O.pi(state: {_, login, pass, _, _}) = pi) do
+  def proc({:download, msg_id, sign}, N2O.pi(state: {_, login, pass, _, _}) = pi) do
     bearer =
       case :application.get_env(:n2o, :jwt_prod, false) do
         false -> :application.get_env(:n2o, :cipher_bearer, [])
         true -> CIPHER.auth(login, pass)
       end
     CIPHER.download(bearer, msg_id) |> savePayload
-    CIPHER.downloadSignature(bearer, msg_id) |> saveSignatures
+    sign == true and CIPHER.downloadSignature(bearer, msg_id) |> saveSignatures
     CIPHER.cancel(msg_id)
     {:stop, :normal, :ok, pi}
   end
